@@ -97,8 +97,7 @@ clobber existing text in the buffer (if the problem was already opened)."
     (when (= 0 (buffer-size buffer))
       (insert (4clojure/format-problem-for-buffer problem-number description questions restrictions))
       (beginning-of-buffer)
-      (search-forward "__")
-      (backward-char 2)
+      (search-forward "__ ")
       (when (functionp 'clojure-mode)
         (clojure-mode)))))
 
@@ -113,24 +112,16 @@ header, a tip about how to check your answers, etc)"
      (concat ";;\n;; Restrictions (please don't use these function(s)): "
              (mapconcat 'identity restrictions ", ")
              "\n"))
-   ";;\n;; Use M-x 4clojure-check-answers when you're done!\n\n"
+   "\n(def __ )\n\n"
    (replace-regexp-in-string "" "" questions)))
 
 (defun 4clojure/get-answer-from-current-buffer (problem-number)
-  "Gets the user's answer to the first question by getting the original question
- (with a blank in it) from 4clojure and matching that against the current
- buffer"
-  (string-match
-   (replace-regexp-in-string
-    "__"
-    "\\(\\(\n\\|.\\)\+\\)"
-    (replace-regexp-in-string
-     "[\s\n]\+"
-     "[\s\n]\+"
-     (regexp-quote (4clojure/first-question-for-problem problem-number))
-     nil t)
-    nil t)
-   (buffer-string))
+  "The user must have a (def __ <solution>) form in the buffer
+before the first question"
+  (string-match (concat "(def __\s*\\(\\(.\\|\n\\)+\\))"
+                        "[\s\n]\+"
+                        (regexp-quote (4clojure/first-question-for-problem problem-number)))
+                (buffer-string))
   (match-string 1 (buffer-string)))
 
 (defun 4clojure/problem-number-of-current-buffer ()
